@@ -1,4 +1,8 @@
 use macros_create_app::make_app33;
+use macros_make_error::make_error;
+use macros_make_scope::make_scope;
+
+make_error!(MyError);
 
 make_app33!(
     [
@@ -25,5 +29,7 @@ make_app33!(
             }
     ]
 );
+
+make_scope!("transferwise", [post, deposit]);
 
 fn handle() {}
