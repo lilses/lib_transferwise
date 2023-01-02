@@ -1,15 +1,39 @@
-use macros_create_app::make_app33;
-use macros_make_error::make_error;
+use crate::TransferWiseError;
+use macros_create_app::make_app64;
+use macros_make_model::make_model22;
 use macros_make_scope::make_scope;
+use my_state::MyState;
+use serde::*;
 
-make_error!(MyError);
+make_model22!(
+    QTransferWiseDeposit,
+    ITransferWiseDeposit,
+    OTransferWiseDeposit,
+    transferwise_deposit,
+    data: sqlx::types::Json<serde_json::Value>,
+    subscription_id: String,
+    event_type: String,
+    sent_at: chrono::DateTime<chrono::Utc>
+);
 
-make_app33!(
+#[derive(
+    utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
+)]
+pub struct TransferWiseDepositRequest {
+    pub data: ITransferWiseDeposit,
+}
+
+#[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
+pub struct IdPathParam {
+    pub id: i32,
+}
+
+make_app64!(
     [
         data: sqlx::types::Json<serde_json::Value>,
         subscription_id: String,
         event_type: String,
-        sent_at: DateTime<Utc>
+        sent_at: chrono::DateTime<chrono::Utc>
     ],
     deposit,
     "/transferwise/deposit",
@@ -25,11 +49,16 @@ make_app33!(
         json: actix_web::web::Json<ITransferWiseDeposit>
             | async move {
                 println!("{:?}", json);
-                Ok::<QTransferWiseDeposit, MyError>(QTransferWiseDeposit::default())
+                Ok::<QTransferWiseDeposit, TransferWiseError>(QTransferWiseDeposit::default())
             }
-    ]
+    ],
+    TransferWiseError
 );
 
 make_scope!("transferwise", [post, deposit]);
 
-fn handle() {}
+fn handle(
+    my_state: actix_web::web::Data<MyState>,
+    json: actix_web::web::Json<ITransferWiseDeposit>,
+) {
+}

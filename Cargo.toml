@@ -6,12 +6,25 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+serde = {version="1", features=["derive"]}
+serde_json = "1"
 utoipa = { version = "2", features = ["actix_extras","chrono","json"] }
 actix-web = { version="4",features=["rustls"] }
 tracing = {version= "0.1",features=["log"] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" , "postgres", "runtime-actix-native-tls","chrono","bigdecimal" ] }
+chrono = {version="0.4",features=["serde"]}
+bigdecimal = {version="0.3.0",features=["serde"]}
+
 macros_create_app = {path="../macros_create_app"}
 macros_make_scope = {path="../macros_make_scope"}
-macros_make_error = {path="../macros_make_error"}
+macros_make_error = {path="../macros_make_error", features=["actix"]}
+macros_make_model = {path="../macros_make_model"}
+my_state = {path="../my_state"}
 my_schema = {path="../my_schema"}
+
+[dev-dependencies]
+dotenv = "0.15.0"
+tokio = { version = "1", features = ["full"] }
+
 
 
