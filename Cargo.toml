@@ -23,6 +23,9 @@ macros_make_model = {path="../macros_make_model"}
 my_state = {path="../my_state"}
 my_schema = {path="../my_schema"}
 
+openssl = {version="0.10.45", features = ["vendored"]}
+base64 = "0.13.0"
+
 [dev-dependencies]
 dotenv = "0.15.0"
 tokio = { version = "1", features = ["full"] }
