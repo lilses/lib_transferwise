@@ -1,5 +1,5 @@
 use crate::TransferWiseError;
-use macros_create_app::make_app64;
+use macros_create_app::make_app65;
 use macros_make_model::make_model22;
 use macros_make_model::make_model23;
 
@@ -52,20 +52,20 @@ make_model22!(
     transactions: sqlx::types::Json<Vec<ITransferWiseStatementTx>>
 );
 
-// #[derive(
-//     utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
-// )]
-// pub struct TransferWiseStatementRequest {
-//     pub data: ITransferWiseStatement,
-//     pub wallet_request: WalletAuthId
-// }
+#[derive(
+    utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
+)]
+pub struct TransferWiseStatementRequest {
+    pub data: ITransferWiseStatement,
+    pub wallet_request: lib_wallet::WalletAuthId,
+}
 
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
 pub struct IdPathParam {
     pub id: i32,
 }
 
-make_app64!(
+make_app65!(
     [transactions: sqlx::types::Json<Vec<ITransferWiseStatementTx>>],
     wise_statement,
     "/transferwise/statement",
@@ -76,11 +76,13 @@ make_app64!(
     QTransferWiseStatement,
     transferwise_statement,
     [
-        ITransferWiseStatement,
+        TransferWiseStatementRequest,
         |my_state: actix_web::web::Data<MyState>,
-         json: actix_web::web::Json<ITransferWiseStatement>| async move {
+         json: actix_web::web::Json<TransferWiseStatementRequest>,
+         wallet: lib_wallet::QWallet,
+         http_request: actix_web::HttpRequest| async move {
             println!("{:?}", json);
-            Ok::<QTransferWiseDeposit, TransferWiseError>(QTransferWiseDeposit::default())
+            Ok::<QTransferWiseStatement, TransferWiseError>(QTransferWiseStatement::default())
         }
     ],
     TransferWiseError

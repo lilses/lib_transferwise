@@ -15,9 +15,10 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" , "postgres", 
 chrono = {version="0.4",features=["serde"]}
 bigdecimal = {version="0.3.0",features=["serde"]}
 
+lib_wallet = {path="../lib_wallet"}
 macros_create_app = {path="../macros_create_app"}
 macros_make_scope = {path="../macros_make_scope"}
-macros_make_error = {path="../macros_make_error", features=["actix"]}
+macros_make_error = {path="../macros_make_error"}
 macros_make_model = {path="../macros_make_model"}
 my_state = {path="../my_state"}
 my_schema = {path="../my_schema"}

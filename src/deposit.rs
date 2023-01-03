@@ -24,7 +24,7 @@ pub struct TransferWiseDepositRequest {
 }
 
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
-pub struct IdPathParam {
+struct IdPathParam {
     pub id: i32,
 }
 
