@@ -3,6 +3,7 @@ use macros_make_model::make_model22;
 use serde::*;
 
 pub mod deposit;
+pub mod payment;
 pub mod statement;
 
 make_error2!(TransferWiseError);

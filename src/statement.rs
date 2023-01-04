@@ -4,14 +4,15 @@ use macros_create_app::make_app65;
 use macros_make_model::make_model22;
 use macros_make_model::make_model23;
 
+use lib_wallet::WalletAuthId;
 use macros_make_scope::make_scope;
 use my_state::MyState;
 use serde::*;
 
 make_model23!(
-    QTransferWiseStatementAmount,
-    ITransferWiseStatementAmount,
-    OTransferWiseStatementAmount,
+    QTransferWiseStatementTxAmount,
+    ITransferWiseStatementTxAmount,
+    OTransferWiseStatementTxAmount,
     value: bigdecimal::BigDecimal,
     currency: String
 );
@@ -39,7 +40,7 @@ make_model23!(
     ITransferWiseStatementTx,
     OTransferWiseStatementTx,
     date: chrono::DateTime<chrono::Utc>,
-    amount: ITransferWiseStatementAmount,
+    amount: ITransferWiseStatementTxAmount,
     total_fees: ITransferWiseStatementTxTotalFees,
     details: ITransferWiseStatementTxDetails,
     reference_number: String
@@ -58,7 +59,7 @@ make_model22!(
 )]
 pub struct TransferWiseStatementRequest {
     pub data: ITransferWiseStatement,
-    pub wallet_request: lib_wallet::WalletAuthId,
+    pub wallet_request: WalletAuthId,
 }
 
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
