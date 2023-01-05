@@ -1,5 +1,5 @@
 use crate::TransferWiseError;
-use macros_create_app::make_app64;
+use macros_create_app::make_app65;
 use macros_make_model::make_model22;
 use macros_make_scope::make_scope;
 use my_state::MyState;
@@ -28,7 +28,7 @@ struct IdPathParam {
     pub id: i32,
 }
 
-make_app64!(
+make_app65!(
     [
         data: sqlx::types::Json<serde_json::Value>,
         subscription_id: String,

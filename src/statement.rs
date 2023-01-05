@@ -82,19 +82,14 @@ make_app65!(
         |my_state: actix_web::web::Data<MyState>,
          json: actix_web::web::Json<TransferWiseStatementRequest>,
          wallet: lib_wallet::QWallet,
-         http_request: actix_web::HttpRequest| async move {
-            println!("{:?}", json);
-            Ok::<QTransferWiseStatement, TransferWiseError>(QTransferWiseStatement::default())
-        }
+         http_request: actix_web::HttpRequest| async move { handle(my_state, json).await }
     ],
     TransferWiseError
 );
 
-make_scope!("transferwise", [post, wise_statement]);
-
 async fn handle(
     s: actix_web::web::Data<MyState>,
-    json: actix_web::web::Json<ITransferWiseStatement>,
+    json: actix_web::web::Json<TransferWiseStatementRequest>,
 ) -> Result<ITransferWiseStatement, TransferWiseError> {
     let reqw = &s.req;
 
@@ -102,6 +97,7 @@ async fn handle(
     //     .await
     //     .map_err(TransferWiseError::from_general)?;
 
+    let json = json.data.clone();
     if json.transactions.is_empty() {
         Ok(ITransferWiseStatement::default())
     } else {
@@ -138,20 +134,33 @@ async fn handle(
             let headers = k.headers();
             let code = headers.get("X-2FA-Approval").unwrap();
 
-            let rsa =
-                openssl::rsa::Rsa::private_key_from_pem(s.env.transferwise_private_pem.as_bytes())
+            let signature = tokio::task::spawn_blocking({
+                let s = s.clone();
+                let code = code.clone();
+                move || {
+                    let rsa = openssl::rsa::Rsa::private_key_from_pem(
+                        s.env.transferwise_private_pem.as_bytes(),
+                    )
                     .map_err(TransferWiseError::from_general)?;
-            let keypair =
-                openssl::pkey::PKey::from_rsa(rsa).map_err(TransferWiseError::from_general)?;
-            let mut signer =
-                openssl::sign::Signer::new(openssl::hash::MessageDigest::sha256(), &keypair)
+                    let keypair = openssl::pkey::PKey::from_rsa(rsa)
+                        .map_err(TransferWiseError::from_general)?;
+                    let mut signer = openssl::sign::Signer::new(
+                        openssl::hash::MessageDigest::sha256(),
+                        &keypair,
+                    )
                     .map_err(TransferWiseError::from_general)?;
-            signer
-                .update(code.as_bytes())
-                .map_err(TransferWiseError::from_general)?;
-            let signature = signer
-                .sign_to_vec()
-                .map_err(TransferWiseError::from_general)?;
+                    signer
+                        .update(code.as_bytes())
+                        .map_err(TransferWiseError::from_general)?;
+                    let signature = signer
+                        .sign_to_vec()
+                        .map_err(TransferWiseError::from_general);
+                    signature
+                }
+            })
+            .await
+            .map_err(TransferWiseError::from_general)??;
+
             let encoded_signature = base64::encode(&signature);
 
             reqw.get(&url)
@@ -184,6 +193,23 @@ async fn handle(
                         },
                     }
                 })
+            // debug
+            // println!("transactions {:?}", ii);
+            // Ok(
+            //     match ii
+            //         .transactions
+            //         .iter()
+            //         .find(|z| z.details.payment_reference == Some(payment_reference.clone()))
+            //     {
+            //         Some(s) => {
+            //             ii.transactions = sqlx::types::Json(vec![s.clone()]);
+            //             ii
+            //         },
+            //         None => ITransferWiseStatement {
+            //             transactions: Default::default(),
+            //         },
+            //     },
+            // )
         } else {
             Err(k
                 .error_for_status()
@@ -198,6 +224,7 @@ async fn handle(
 mod tests {
     use crate::statement::{
         handle, ITransferWiseStatement, ITransferWiseStatementTx, ITransferWiseStatementTxDetails,
+        TransferWiseStatementRequest,
     };
     use crate::TransferWiseError;
     use dotenv;
@@ -210,19 +237,22 @@ mod tests {
         let s = get_my_state()
             .await
             .map_err(TransferWiseError::from_general)?;
-        let mut i = ITransferWiseStatement {
-            transactions: sqlx::types::Json(vec![ITransferWiseStatementTx {
-                date: Default::default(),
-                amount: Default::default(),
-                total_fees: Default::default(),
-                details: ITransferWiseStatementTxDetails {
-                    description: "".to_string(),
-                    sender_name: None,
-                    sender_account: None,
-                    payment_reference: Some("".to_string()),
-                },
-                reference_number: "".to_string(),
-            }]),
+        let mut i = TransferWiseStatementRequest {
+            data: ITransferWiseStatement {
+                transactions: sqlx::types::Json(vec![ITransferWiseStatementTx {
+                    date: Default::default(),
+                    amount: Default::default(),
+                    total_fees: Default::default(),
+                    details: ITransferWiseStatementTxDetails {
+                        description: "".to_string(),
+                        sender_name: None,
+                        sender_account: None,
+                        payment_reference: Some("".to_string()),
+                    },
+                    reference_number: "".to_string(),
+                }]),
+            },
+            wallet_request: Default::default(),
         };
         let res = handle(actix_web::web::Data::new(s), actix_web::web::Json(i))
             .await

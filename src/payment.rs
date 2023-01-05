@@ -4,6 +4,7 @@ use macros_make_model::make_model22;
 use macros_make_scope::make_scope;
 use my_schema::general::IProduct;
 use my_state::MyState;
+use rand::Rng;
 use serde::*;
 use sqlx::Error;
 
@@ -56,13 +57,23 @@ make_app65!(
     TransferWiseError
 );
 
-make_scope!("transferwise", [post, wise_payment]);
-
 async fn handle(
     s: actix_web::web::Data<MyState>,
     json: actix_web::web::Json<TransferWisePaymentRequest>,
 ) -> Result<QTransferWisePayment, TransferWiseError> {
-    transferwise_payment::postgres_query::insert(&s.sqlx_pool, &json.data)
+    let reference = tokio::task::spawn_blocking(|| {
+        let mut rng = rand::thread_rng();
+        let t = rng.gen_range(4..8);
+        rng.sample_iter(&rand::distributions::Alphanumeric)
+            .take(t)
+            .map(char::from)
+            .collect::<String>()
+    })
+    .await
+    .map_err(TransferWiseError::from_general)?;
+    let mut data = json.data.clone();
+    data.reference = reference;
+    transferwise_payment::postgres_query::insert(&s.sqlx_pool, &data)
         .await
         .map_err(TransferWiseError::from_general)
 }
