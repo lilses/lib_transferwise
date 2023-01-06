@@ -16,7 +16,8 @@ make_model22!(
     products: sqlx::types::Json<Vec<IProduct>>,
     reference: String,
     amount: bigdecimal::BigDecimal,
-    created_at: chrono::DateTime<chrono::Utc>
+    created_at: chrono::DateTime<chrono::Utc>,
+    wallet_id: i32
 );
 
 #[derive(
@@ -37,7 +38,8 @@ make_app65!(
         products: sqlx::types::Json<Vec<IProduct>>,
         reference: String,
         amount: bigdecimal::BigDecimal,
-        created_at: chrono::DateTime<chrono::Utc>
+        created_at: chrono::DateTime<chrono::Utc>,
+        wallet_id: i32
     ],
     wise_payment,
     "/transferwise/payment",
