@@ -22,6 +22,7 @@ macros_make_error = {path="../macros_make_error"}
 macros_make_model = {path="../macros_make_model"}
 my_state = {path="../my_state"}
 my_schema = {path="../my_schema"}
+lib_fcm = {path="../lib_fcm"}
 
 openssl = {version="0.10.45", features = ["vendored"]}
 base64 = "0.13.0"

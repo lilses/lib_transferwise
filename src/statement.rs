@@ -82,7 +82,9 @@ make_app65!(
         |my_state: actix_web::web::Data<MyState>,
          json: actix_web::web::Json<TransferWiseStatementRequest>,
          wallet: lib_wallet::QWallet,
-         http_request: actix_web::HttpRequest| async move { handle(my_state, json).await }
+         http_request: actix_web::HttpRequest| async move {
+            handle(my_state, json, wallet).await
+        }
     ],
     TransferWiseError
 );
@@ -90,6 +92,7 @@ make_app65!(
 async fn handle(
     s: actix_web::web::Data<MyState>,
     json: actix_web::web::Json<TransferWiseStatementRequest>,
+    wallet: lib_wallet::QWallet,
 ) -> Result<ITransferWiseStatement, TransferWiseError> {
     let reqw = &s.req;
 
@@ -163,36 +166,60 @@ async fn handle(
 
             let encoded_signature = base64::encode(&signature);
 
-            reqw.get(&url)
-                .bearer_auth(&s.env.transferwise_pat)
-                .header(
-                    "X-2FA-Approval",
-                    code.to_str().map_err(TransferWiseError::from_general)?,
-                )
-                .header("X-Signature", encoded_signature.as_str())
-                .send()
-                .await
-                .map_err(TransferWiseError::from_general)?
-                .error_for_status()
-                .map_err(TransferWiseError::from_general)?
-                .json::<ITransferWiseStatement>()
-                .await
-                .map_err(TransferWiseError::from_general)
-                .map(|mut x| {
-                    match x
-                        .transactions
-                        .iter()
-                        .find(|z| z.details.payment_reference == Some(payment_reference.clone()))
-                    {
-                        Some(s) => {
-                            x.transactions = sqlx::types::Json(vec![s.clone()]);
-                            x
+            let statement =
+                reqw.get(&url)
+                    .bearer_auth(&s.env.transferwise_pat)
+                    .header(
+                        "X-2FA-Approval",
+                        code.to_str().map_err(TransferWiseError::from_general)?,
+                    )
+                    .header("X-Signature", encoded_signature.as_str())
+                    .send()
+                    .await
+                    .map_err(TransferWiseError::from_general)?
+                    .error_for_status()
+                    .map_err(TransferWiseError::from_general)?
+                    .json::<ITransferWiseStatement>()
+                    .await
+                    .map_err(TransferWiseError::from_general)
+                    .map(|mut x| {
+                        match x.transactions.iter().find(|z| {
+                            z.details.payment_reference == Some(payment_reference.clone())
+                        }) {
+                            Some(s) => {
+                                x.transactions = sqlx::types::Json(vec![s.clone()]);
+                                x
+                            },
+                            None => ITransferWiseStatement {
+                                transactions: Default::default(),
+                            },
+                        }
+                    })?;
+
+            if !statement.transactions.is_empty() {
+                let fcm_client = lib_fcm::make_client(&s.env.fcm_api);
+                // think about this
+                let fcm_id = wallet.fcm_id.unwrap();
+                tokio::spawn(async move {
+                    let resp = lib_fcm::send_message(
+                        &fcm_client,
+                        &lib_fcm::IFcmMessage {
+                            message: serde_json::to_string(&lib_fcm::Message::TransferwisePayment)
+                                .map_err(TransferWiseError::from_general)?
+                                .parse::<i8>()
+                                .map_err(TransferWiseError::from_general)?,
+                            fcm_id,
                         },
-                        None => ITransferWiseStatement {
-                            transactions: Default::default(),
-                        },
+                    )
+                    .await;
+                    if resp.is_err() {
+                        tracing::error!("FcmError: {:?}", resp.err());
                     }
-                })
+                    Ok::<(), TransferWiseError>(())
+                });
+            }
+
+            Ok(statement)
             // debug
             // println!("transactions {:?}", ii);
             // Ok(
