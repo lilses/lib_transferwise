@@ -75,6 +75,7 @@ async fn handle(
     .map_err(TransferWiseError::from_general)?;
     let mut data = json.data.clone();
     data.reference = reference;
+
     transferwise_payment::postgres_query::insert(&s.sqlx_pool, &data)
         .await
         .map_err(TransferWiseError::from_general)
