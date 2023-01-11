@@ -9,9 +9,9 @@ use serde::*;
 use sqlx::Error;
 
 make_model22!(
-    QTransferWisePayment,
-    ITransferWisePayment,
-    OTransferWisePayment,
+    Q,
+    I,
+    O,
     transferwise_payment,
     products: sqlx::types::Json<Vec<IProduct>>,
     reference: String,
@@ -24,7 +24,7 @@ make_model22!(
     utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
 )]
 pub struct TransferWisePaymentRequest {
-    pub data: ITransferWisePayment,
+    pub data: I,
     pub wallet_request: lib_auth_id::WalletAuthId,
 }
 
@@ -41,13 +41,13 @@ make_app65!(
         created_at: chrono::DateTime<chrono::Utc>,
         wallet_id: i32
     ],
-    wise_payment,
+    route,
     "/transferwise/payment",
     "/transferwise/payment/{id}",
     "/payment",
     "/payment/{id}",
-    OTransferWisePayment,
-    QTransferWisePayment,
+    O,
+    Q,
     transferwise_payment,
     [
         TransferWisePaymentRequest,
@@ -62,7 +62,7 @@ make_app65!(
 async fn handle(
     s: actix_web::web::Data<MyState>,
     json: actix_web::web::Json<TransferWisePaymentRequest>,
-) -> Result<QTransferWisePayment, TransferWiseError> {
+) -> Result<Q, TransferWiseError> {
     let reference = tokio::task::spawn_blocking(|| {
         let mut rng = rand::thread_rng();
         let t = rng.gen_range(4..8);

@@ -9,6 +9,7 @@ use macros_make_scope::make_scope;
 use my_state::MyState;
 use serde::*;
 
+// now this should be its own file
 make_model23!(
     QTransferWiseStatementTxAmount,
     ITransferWiseStatementTxAmount,
@@ -47,9 +48,9 @@ make_model23!(
 );
 
 make_model22!(
-    QTransferWiseStatement,
-    ITransferWiseStatement,
-    OTransferWiseStatement,
+    Q,
+    I,
+    O,
     transferwise_statement,
     transactions: sqlx::types::Json<Vec<ITransferWiseStatementTx>>
 );
@@ -58,7 +59,7 @@ make_model22!(
     utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
 )]
 pub struct TransferWiseStatementRequest {
-    pub data: ITransferWiseStatement,
+    pub data: I,
     pub wallet_request: WalletAuthId,
 }
 
@@ -69,13 +70,13 @@ pub struct IdPathParam {
 
 make_app65!(
     [transactions: sqlx::types::Json<Vec<ITransferWiseStatementTx>>],
-    wise_statement,
+    route,
     "/transferwise/statement",
     "/transferwise/statement/{id}",
     "/statement",
     "/statement/{id}",
-    OTransferWiseStatement,
-    QTransferWiseStatement,
+    O,
+    Q,
     transferwise_statement,
     [
         TransferWiseStatementRequest,
@@ -93,7 +94,7 @@ async fn handle(
     s: actix_web::web::Data<MyState>,
     json: actix_web::web::Json<TransferWiseStatementRequest>,
     wallet: lib_wallet::QWallet,
-) -> Result<ITransferWiseStatement, TransferWiseError> {
+) -> Result<I, TransferWiseError> {
     let reqw = &s.req;
 
     // let scas = transferwise_sca::postgres_query::get(&s.sqlx_pool)
@@ -102,7 +103,7 @@ async fn handle(
 
     let json = json.data.clone();
     if json.transactions.is_empty() {
-        Ok(ITransferWiseStatement::default())
+        Ok(I::default())
     } else {
         let tx = &json.transactions[0];
         let payment_reference =
@@ -179,7 +180,7 @@ async fn handle(
                     .map_err(TransferWiseError::from_general)?
                     .error_for_status()
                     .map_err(TransferWiseError::from_general)?
-                    .json::<ITransferWiseStatement>()
+                    .json::<I>()
                     .await
                     .map_err(TransferWiseError::from_general)
                     .map(|mut x| {
@@ -190,7 +191,7 @@ async fn handle(
                                 x.transactions = sqlx::types::Json(vec![s.clone()]);
                                 x
                             },
-                            None => ITransferWiseStatement {
+                            None => I {
                                 transactions: Default::default(),
                             },
                         }
@@ -250,8 +251,8 @@ async fn handle(
 #[cfg(test)]
 mod tests {
     use crate::statement::{
-        handle, ITransferWiseStatement, ITransferWiseStatementTx, ITransferWiseStatementTxDetails,
-        TransferWiseStatementRequest,
+        handle, ITransferWiseStatementTx, ITransferWiseStatementTxDetails,
+        TransferWiseStatementRequest, I,
     };
     use crate::TransferWiseError;
     use dotenv;
@@ -265,7 +266,7 @@ mod tests {
             .await
             .map_err(TransferWiseError::from_general)?;
         let mut i = TransferWiseStatementRequest {
-            data: ITransferWiseStatement {
+            data: I {
                 transactions: sqlx::types::Json(vec![ITransferWiseStatementTx {
                     date: Default::default(),
                     amount: Default::default(),

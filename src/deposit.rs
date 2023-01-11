@@ -6,9 +6,9 @@ use my_state::MyState;
 use serde::*;
 
 make_model22!(
-    QTransferWiseDeposit,
-    ITransferWiseDeposit,
-    OTransferWiseDeposit,
+    Q,
+    I,
+    O,
     transferwise_deposit,
     data: sqlx::types::Json<serde_json::Value>,
     subscription_id: String,
@@ -20,7 +20,7 @@ make_model22!(
     utoipa::ToSchema, Debug, PartialEq, serde::Deserialize, serde::Serialize, Clone, Default,
 )]
 pub struct TransferWiseDepositRequest {
-    pub data: ITransferWiseDeposit,
+    pub data: I,
 }
 
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
@@ -35,30 +35,30 @@ make_app65!(
         event_type: String,
         sent_at: chrono::DateTime<chrono::Utc>
     ],
-    deposit,
+    route,
     "/transferwise/deposit",
     "/transferwise/deposit/{id}",
     "/deposit",
     "/deposit/{id}",
-    OTransferWiseDeposit,
-    QTransferWiseDeposit,
+    O,
+    Q,
     transferwise_deposit,
     [
-        ITransferWiseDeposit,
+        I,
         no_auth | my_state: actix_web::web::Data<MyState>,
-        json: actix_web::web::Json<ITransferWiseDeposit>
+        json: actix_web::web::Json<I>
             | async move {
                 println!("{:?}", json);
-                Ok::<QTransferWiseDeposit, TransferWiseError>(QTransferWiseDeposit::default())
+                Ok::<Q, TransferWiseError>(Q::default())
             }
     ],
     TransferWiseError
 );
 
-make_scope!("transferwise", [post, deposit]);
+make_scope!("transferwise", [post, route]);
 
 fn handle(
     my_state: actix_web::web::Data<MyState>,
-    json: actix_web::web::Json<ITransferWiseDeposit>,
+    json: actix_web::web::Json<I>,
 ) {
 }
