@@ -4,7 +4,7 @@ use macros_create_app::make_app65;
 use macros_make_model::make_model22;
 use macros_make_model::make_model23;
 
-use lib_wallet::WalletAuthId;
+use lib_auth_id::WalletAuthId;
 use macros_make_scope::make_scope;
 use my_state::MyState;
 use serde::*;

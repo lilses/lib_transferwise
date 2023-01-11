@@ -16,6 +16,7 @@ chrono = {version="0.4",features=["serde"]}
 bigdecimal = {version="0.3.0",features=["serde"]}
 
 lib_wallet = {path="../lib_wallet"}
+lib_auth_id = {path="../lib_auth_id"}
 macros_create_app = {path="../macros_create_app"}
 macros_make_scope = {path="../macros_make_scope"}
 macros_make_error = {path="../macros_make_error"}
