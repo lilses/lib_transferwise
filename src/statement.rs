@@ -196,28 +196,28 @@ async fn handle(
                         }
                     })?;
 
-            if !statement.transactions.is_empty() {
-                let fcm_client = lib_fcm::make_client(&s.env.fcm_api);
-                // think about this
-                let fcm_id = wallet.fcm_id.unwrap();
-                tokio::spawn(async move {
-                    let resp = lib_fcm::send_message(
-                        &fcm_client,
-                        &lib_fcm::IFcmMessage {
-                            message: serde_json::to_string(&lib_fcm::Message::TransferwisePayment)
-                                .map_err(TransferWiseError::from_general)?
-                                .parse::<i8>()
-                                .map_err(TransferWiseError::from_general)?,
-                            fcm_id,
-                        },
-                    )
-                    .await;
-                    if resp.is_err() {
-                        tracing::error!("FcmError: {:?}", resp.err());
-                    }
-                    Ok::<(), TransferWiseError>(())
-                });
-            }
+            // if !statement.transactions.is_empty() {
+            //     let fcm_client = lib_fcm::make_client(&s.env.fcm_api);
+            //     // think about this
+            //     let fcm_id = wallet.fcm_id.unwrap();
+            //     tokio::spawn(async move {
+            //         let resp = lib_fcm::send_message(
+            //             &fcm_client,
+            //             &lib_fcm::IFcmMessage {
+            //                 message: serde_json::to_string(&lib_fcm::Message::TransferwisePayment)
+            //                     .map_err(TransferWiseError::from_general)?
+            //                     .parse::<i8>()
+            //                     .map_err(TransferWiseError::from_general)?,
+            //                 fcm_id,
+            //             },
+            //         )
+            //         .await;
+            //         if resp.is_err() {
+            //             tracing::error!("FcmError: {:?}", resp.err());
+            //         }
+            //         Ok::<(), TransferWiseError>(())
+            //     });
+            // }
 
             Ok(statement)
             // debug
