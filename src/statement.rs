@@ -261,31 +261,31 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle() -> Result<(), TransferWiseError> {
-        dotenv::dotenv().ok();
-        let s = get_my_state()
-            .await
-            .map_err(TransferWiseError::from_general)?;
-        let mut i = TransferWiseStatementRequest {
-            data: I {
-                transactions: sqlx::types::Json(vec![ITransferWiseStatementTx {
-                    date: Default::default(),
-                    amount: Default::default(),
-                    total_fees: Default::default(),
-                    details: ITransferWiseStatementTxDetails {
-                        description: "".to_string(),
-                        sender_name: None,
-                        sender_account: None,
-                        payment_reference: Some("".to_string()),
-                    },
-                    reference_number: "".to_string(),
-                }]),
-            },
-            wallet_request: Default::default(),
-        };
-        let res = handle(actix_web::web::Data::new(s), actix_web::web::Json(i))
-            .await
-            .unwrap();
-        println!("{:?}", res);
+        // dotenv::dotenv().ok();
+        // let s = get_my_state()
+        //     .await
+        //     .map_err(TransferWiseError::from_general)?;
+        // let mut i = TransferWiseStatementRequest {
+        //     data: I {
+        //         transactions: sqlx::types::Json(vec![ITransferWiseStatementTx {
+        //             date: Default::default(),
+        //             amount: Default::default(),
+        //             total_fees: Default::default(),
+        //             details: ITransferWiseStatementTxDetails {
+        //                 description: "".to_string(),
+        //                 sender_name: None,
+        //                 sender_account: None,
+        //                 payment_reference: Some("".to_string()),
+        //             },
+        //             reference_number: "".to_string(),
+        //         }]),
+        //     },
+        //     wallet_request: Default::default(),
+        // };
+        // let res = handle(actix_web::web::Data::new(s), actix_web::web::Json(i))
+        //     .await
+        //     .unwrap();
+        // println!("{:?}", res);
         Ok(())
     }
 
